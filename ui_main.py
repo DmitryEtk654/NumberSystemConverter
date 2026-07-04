@@ -8,8 +8,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NumberSystemConventer")
-        self.resize(800, 600)
-        self.setMinimumSize(700, 500)
+        self.resize(1000, 800)
+        self.setMinimumSize(900, 700)
         
         self.db = HistoryManager()
         

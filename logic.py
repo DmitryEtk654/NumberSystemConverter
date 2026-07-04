@@ -37,3 +37,17 @@ def convert(value: str, base_from: int, base_to: int) -> str:
         return value.strip().upper()
     decimal = to_decimal(value, base_from)
     return from_decimal(decimal, base_to)
+
+def validate_base(base: int) -> bool:
+    return base in [2, 8, 10, 16]
+
+def detect_base(value: str) -> int:
+    value = value.strip()
+    if value.startswith(('0b', '0B')):
+        return 2
+    elif value.startswith(('0o', '0O')):
+        return 8
+    elif value.startswith(('0x', '0X')):
+        return 16
+    else:
+        return 10
