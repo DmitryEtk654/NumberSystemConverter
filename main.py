@@ -8,6 +8,12 @@ def main():
     app.setApplicationName("NumberSystemConverter")
     app.setFont(QFont("Segoe UI", 10))
 
+    try:
+        with open("assets/style.qss", "r") as f:
+            app.setStyleSheet(f.read())
+    except FileNotFoundError:
+        pass
+    
     window = MainWindow()
     window.show()
 
