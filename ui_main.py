@@ -3,13 +3,14 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QImage
 from logic import convert
 from database import HistoryManager
+from logic import detect_base
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NumberSystemConventer")
-        self.resize(1000, 800)
-        self.setMinimumSize(900, 700)
+        self.resize(1100, 900)
+        self.setMinimumSize(1000, 800)
         
         self.db = HistoryManager()
         
@@ -72,6 +73,14 @@ class MainWindow(QMainWindow):
         left_layout.addSpacing(10)
         
         self.btn_clear = QPushButton("Очистить")
+
+        self.btn_detect = QPushButton("Определить систему")
+        self.btn_detect.setMinimumHeight(30)
+        left_layout.addWidget(self.btn_detect)
+        
+        self.btn_copy = QPushButton("Копировать результат")
+        self.btn_copy.setMinimumHeight(30)
+        left_layout.addWidget(self.btn_copy)
         left_layout.addWidget(self.btn_clear)
         
         left_layout.addSpacing(10)
@@ -122,6 +131,37 @@ class MainWindow(QMainWindow):
         self.btn_export.clicked.connect(self._export_csv)
         self.btn_clear_history.clicked.connect(self._clear_history)
         self.input_num.returnPressed.connect(self._on_convert)
+
+        self.btn_detect.clicked.connect(self._detect_system)
+        self.btn_copy.clicked.connect(self._copy_result)
+        
+    def _detect_system(self):
+        value = self.input_num.text().strip()
+        if not value:
+            QMessageBox.information(self, "Информация", "Введите число для определения системы")
+            return
+        
+        detected = detect_base(value)
+        
+        for i in range(self.base_from.count()):
+            if str(detected) == self.base_from.itemText(i).split()[0]:
+                self.base_from.setCurrentIndex(i)
+                break
+        
+        QMessageBox.information(
+            self, "Определена система",
+            f"Число '{value}' определено как {detected}-ичная система"
+        )
+    
+    def _copy_result(self):
+        """Копирование результата в буфер обмена"""
+        result = self.output.text()
+        if result:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(result)
+            QMessageBox.information(self, "Успех", "Результат скопирован в буфер обмена")
+        else:
+            QMessageBox.warning(self, "Ошибка", "Нет результата для копирования")
     
     def _on_convert(self):
         value = self.input_num.text().strip()
