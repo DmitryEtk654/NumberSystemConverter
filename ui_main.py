@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtWidgets import QShortcut
+from PyQt5.QtGui import QKeySequence
 from logic import convert
 from database import HistoryManager
 from logic import detect_base
@@ -21,6 +23,15 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._bind_signals()
         self._refresh_history()
+
+        self.shortcut_convert = QShortcut(QKeySequence("Ctrl+Enter"), self)
+        self.shortcut_convert.activated.connect(self._on_convert)
+
+        self.shortcut_clear = QShortcut(QKeySequence("Ctrl+Shift+C"), self)
+        self.shortcut_clear.activated.connect(self._clear_fields)
+
+        self.shortcut_copy = QShortcut(QKeySequence("Ctrl+C"), self)
+        self.shortcut_copy.activated.connect(self._copy_result)
     
     def _setup_ui(self):
         main_layout = QHBoxLayout()
