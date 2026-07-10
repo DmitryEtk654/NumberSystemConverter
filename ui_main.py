@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from logic import convert
 from database import HistoryManager
 from logic import detect_base
+import json
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -112,6 +113,8 @@ class MainWindow(QMainWindow):
         
         btn_layout = QHBoxLayout()
         self.btn_export = QPushButton("Экспорт CSV")
+        self.btn_export_json = QPushButton("Экспорт JSON")
+        btn_layout.addWidget(self.btn_export_json)
         self.btn_clear_history = QPushButton("Очистить историю")
         btn_layout.addWidget(self.btn_export)
         btn_layout.addWidget(self.btn_clear_history)
@@ -129,11 +132,13 @@ class MainWindow(QMainWindow):
         self.btn_clear.clicked.connect(self._clear_fields)
         self.btn_load_image.clicked.connect(self._load_image)
         self.btn_export.clicked.connect(self._export_csv)
+        self.btn_export_json.clicked.connect(self._export_json)
         self.btn_clear_history.clicked.connect(self._clear_history)
         self.input_num.returnPressed.connect(self._on_convert)
 
         self.btn_detect.clicked.connect(self._detect_system)
         self.btn_copy.clicked.connect(self._copy_result)
+
         
     def _detect_system(self):
         value = self.input_num.text().strip()
@@ -154,7 +159,6 @@ class MainWindow(QMainWindow):
         )
     
     def _copy_result(self):
-        """Копирование результата в буфер обмена"""
         result = self.output.text()
         if result:
             clipboard = QApplication.clipboard()
@@ -207,6 +211,44 @@ class MainWindow(QMainWindow):
             self.image_label.setScaledContents(True)
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить:\n{e}")
+
+    def _export_json(self):
+        path, _ = QFileDialog.getSaveFileName(
+        self,
+        "Сохранить JSON",
+        "history.json",
+        "JSON files (*.json)"
+        )
+
+        if not path:
+            return
+
+        records = self.db.get_all()
+        if not records:
+            QMessageBox.information(self, "Информация", "История пуста")
+            return
+
+        try:
+            data = []
+            for rec in records:
+                data.append({
+                    "timestamp": rec["timestamp"],
+                    "input_value": rec["input_value"],
+                    "base_from": rec["base_from"],
+                    "base_to": rec["base_to"],
+                    "result": rec["result"]
+                })
+
+            with open(path, 'w') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
+            QMessageBox.information(
+                self,
+                "Успех",
+                f"Экспортировано в:\n{path}"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
     
     def _refresh_history(self):
         self.history_table.setRowCount(0)

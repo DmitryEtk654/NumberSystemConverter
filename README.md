@@ -39,7 +39,7 @@ python main.py
 - README.md
 
 ## Технологии
-Python 3.8+
-PyQt5
-SQLite
-Pillow
+- Python 3.8+
+- PyQt5
+- SQLite
+- Pillow
