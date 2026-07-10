@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 from ui_main import MainWindow
+from theme_manager import ThemeManager
 
 def main():
     app = QApplication(sys.argv) #создание приложения
@@ -13,6 +14,9 @@ def main():
             app.setStyleSheet(f.read())
     except FileNotFoundError:
         pass
+
+    theme_manager = ThemeManager()
+    app.setStyleSheet(theme_manager.get_style())
     
     window = MainWindow()
     window.show()

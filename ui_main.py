@@ -7,13 +7,16 @@ from logic import convert
 from database import HistoryManager
 from logic import detect_base
 import json
+from theme_manager import ThemeManager
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMessageBox
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NumberSystemConventer")
-        self.resize(1100, 900)
-        self.setMinimumSize(1000, 800)
+        self.resize(1500, 1200)
+        self.setMinimumSize(1300, 1100)
         
         self.db = HistoryManager()
         
@@ -36,106 +39,156 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         main_layout = QHBoxLayout()
         self.centralWidget().setLayout(main_layout)
-        
+
+
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        
-        title = QLabel("Конвертер систем счисления")
+
+        title = QLabel("NumberSystemConverter")
         title.setStyleSheet("font-size: 18px; font-weight: bold;")
         left_layout.addWidget(title)
-        
+
         left_layout.addSpacing(10)
-        
+
         left_layout.addWidget(QLabel("Введите число:"))
         self.input_num = QLineEdit()
         self.input_num.setPlaceholderText("Например: 1010, FF, 255")
         self.input_num.setMinimumHeight(30)
         left_layout.addWidget(self.input_num)
-        
+
         left_layout.addSpacing(10)
-        
+
         form_layout = QFormLayout()
-        
+
         self.base_from = QComboBox()
-        self.base_from.addItems(["2 (Двоичная)", "8 (Восьмеричная)", "10 (Десятичная)", "16 (Шестнадцатеричная)"])
+        self.base_from.addItems([
+            "2 (Двоичная)",
+            "8 (Восьмеричная)",
+            "10 (Десятичная)",
+            "16 (Шестнадцатеричная)"
+        ])
         self.base_from.setCurrentIndex(2)
+        self.base_from.setMinimumHeight(30)
         form_layout.addRow("Из системы:", self.base_from)
-        
+
         self.base_to = QComboBox()
-        self.base_to.addItems(["2 (Двоичная)", "8 (Восьмеричная)", "10 (Десятичная)", "16 (Шестнадцатеричная)"])
+        self.base_to.addItems([
+            "2 (Двоичная)",
+            "8 (Восьмеричная)",
+            "10 (Десятичная)",
+            "16 (Шестнадцатеричная)"
+        ])
         self.base_to.setCurrentIndex(0)
+        self.base_to.setMinimumHeight(30)
         form_layout.addRow("В систему:", self.base_to)
-        
+
         left_layout.addLayout(form_layout)
-        
+
         left_layout.addSpacing(10)
-        
+
         self.btn_convert = QPushButton("Конвертировать")
         self.btn_convert.setMinimumHeight(40)
+        self.btn_convert.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
         left_layout.addWidget(self.btn_convert)
-        
+
         left_layout.addSpacing(10)
-        
+
         left_layout.addWidget(QLabel("Результат:"))
         self.output = QLineEdit()
         self.output.setReadOnly(True)
         self.output.setMinimumHeight(35)
+        self.output.setStyleSheet("""
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #ecf0f1;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+        """)
         left_layout.addWidget(self.output)
-        
-        left_layout.addSpacing(10)
-        
-        self.btn_clear = QPushButton("Очистить")
 
-        self.btn_detect = QPushButton("Определить систему")
-        self.btn_detect.setMinimumHeight(30)
-        left_layout.addWidget(self.btn_detect)
-        
-        self.btn_copy = QPushButton("Копировать результат")
-        self.btn_copy.setMinimumHeight(30)
-        left_layout.addWidget(self.btn_copy)
-        left_layout.addWidget(self.btn_clear)
-        
         left_layout.addSpacing(10)
-        
+
+        btn_row = QHBoxLayout()
+
+        self.btn_clear = QPushButton("Очистить")
+        self.btn_detect = QPushButton("Определить систему")
+        self.btn_copy = QPushButton("Копировать результат")
+        self.btn_theme = QPushButton("Тёмная тема") 
+
+        btn_row.addWidget(self.btn_clear)
+        btn_row.addWidget(self.btn_detect)
+        btn_row.addWidget(self.btn_copy)
+        btn_row.addWidget(self.btn_theme)               
+        left_layout.addLayout(btn_row)               
+    
+        left_layout.addSpacing(10)
+
         left_layout.addWidget(QLabel("Изображение:"))
         self.image_label = QLabel("Нет изображения")
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setMinimumHeight(150)
-        self.image_label.setStyleSheet("background-color: #f5f5f5; border: 2px dashed #bbb; border-radius: 8px;")
+        self.image_label.setStyleSheet("""
+            background-color: #f5f5f5;
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+        """)
         left_layout.addWidget(self.image_label)
-        
+
         self.btn_load_image = QPushButton("Загрузить изображение")
+        self.btn_load_image.setMinimumHeight(30)
         left_layout.addWidget(self.btn_load_image)
-        
+
+        self.btn_clear_image = QPushButton("Очистить изображение")
+        self.btn_clear_image.setMinimumHeight(30)
+        left_layout.addWidget(self.btn_clear_image)
+
         left_layout.addStretch()
-        
+
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        
+
         right_layout.addWidget(QLabel("История конвертаций"))
-        
+
         self.history_table = QTableWidget()
         self.history_table.setColumnCount(5)
-        self.history_table.setHorizontalHeaderLabels(["Дата", "Число", "Из", "В", "Результат"])
-        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.history_table.setHorizontalHeaderLabels([
+        "Дата", "Число", "Из", "В", "Результат"
+        ])
+        self.history_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
+        )
         self.history_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.history_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.history_table.setAlternatingRowColors(True)
         right_layout.addWidget(self.history_table)
-        
-        btn_layout = QHBoxLayout()
+
+        btn_history = QHBoxLayout()
+
         self.btn_export = QPushButton("Экспорт CSV")
         self.btn_export_json = QPushButton("Экспорт JSON")
-        btn_layout.addWidget(self.btn_export_json)
         self.btn_clear_history = QPushButton("Очистить историю")
-        btn_layout.addWidget(self.btn_export)
-        btn_layout.addWidget(self.btn_clear_history)
-        right_layout.addLayout(btn_layout)
-        
+
+        btn_history.addWidget(self.btn_export)
+        btn_history.addWidget(self.btn_export_json)
+        btn_history.addWidget(self.btn_clear_history)
+
+        right_layout.addLayout(btn_history)
+
         splitter = QSplitter(Qt.Horizontal)
         splitter.addWidget(left_widget)
         splitter.addWidget(right_widget)
         splitter.setSizes([450, 450])
-        
+
         main_layout.addWidget(splitter)
     
     def _bind_signals(self):
@@ -150,7 +203,144 @@ class MainWindow(QMainWindow):
         self.btn_detect.clicked.connect(self._detect_system)
         self.btn_copy.clicked.connect(self._copy_result)
 
-        
+        self.btn_theme.clicked.connect(self._toggle_theme)
+
+    def _toggle_theme(self):
+        try:
+            app = QApplication.instance()
+            if app is None:
+                return
+
+            tm = ThemeManager()
+            current = tm.get_theme()
+
+            if current == "light":
+                tm.set_theme("dark")
+                dark_style = """
+                    QMainWindow { background-color: #1e1e1e; }
+                    QWidget { background-color: #1e1e1e; }
+                    QLabel { color: #e0e0e0; }
+                    QPushButton {
+                        background-color: #2d2d2d;
+                        color: #e0e0e0;
+                        border: 1px solid #3d3d3d;
+                        border-radius: 5px;
+                        padding: 8px 15px;
+                    }
+                    QPushButton:hover { background-color: #3d3d3d; }
+                    QLineEdit {
+                        background-color: #2d2d2d;
+                        color: #e0e0e0;
+                        border: 2px solid #3d3d3d;
+                        border-radius: 5px;
+                        padding: 8px;
+                    }
+                    QComboBox {
+                        background-color: #2d2d2d;
+                        color: #e0e0e0;
+                        border: 2px solid #3d3d3d;
+                        border-radius: 5px;
+                        padding: 8px;
+                    }
+                    QTableWidget {
+                        background-color: #2d2d2d;
+                        color: #e0e0e0;
+                        border: 1px solid #3d3d3d;
+                    }
+                    QTableWidget::item { color: #e0e0e0; }
+                    QTableWidget::item:selected { background-color: #4CAF50; color: white; }
+                        QHeaderView::section {
+                            background-color: #2c2c2c;
+                        color: #e0e0e0;
+                    }
+                    QSplitter::handle { background-color: #3d3d3d; }
+                    QStatusBar { background-color: #2c2c2c; color: #e0e0e0; }
+                    QMessageBox { background-color: #2d2d2d; color: #e0e0e0; }
+                """
+                app.setStyleSheet(dark_style)
+                self.btn_theme.setText("Светлая тема")
+                self.btn_convert.setStyleSheet("""
+                    QPushButton {
+                        background-color: #2e7d32;
+                        color: #ffffff;
+                        border: 2px solid #4CAF50;
+                        border-radius: 5px;
+                        padding: 8px 15px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background-color: #388e3c;
+                        border-color: #66bb6a;
+                    }
+                """)
+            else:
+                tm.set_theme("light")
+                light_style = """
+                    QMainWindow { background-color: #f0f2f5; }
+                    QWidget { background-color: #f0f2f5; }
+                    QLabel { color: #2c3e50; }
+                    QPushButton {
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        padding: 8px 15px;
+                    }
+                    QPushButton:hover { background-color: #45a049; }
+                    QLineEdit {
+                        background-color: white;
+                        color: #2c3e50;
+                        border: 2px solid #bdc3c7;
+                        border-radius: 5px;
+                        padding: 8px;
+                    }
+                    QComboBox {
+                        background-color: white;
+                        color: #2c3e50;
+                        border: 2px solid #bdc3c7;
+                        border-radius: 5px;
+                        padding: 8px;
+                    }
+                    QTableWidget {
+                        background-color: white;
+                        color: #2c3e50;
+                        border: 1px solid #dee2e6;
+                    }
+                    QTableWidget::item:selected { background-color: #4CAF50; color: white; }
+                    QHeaderView::section {
+                        background-color: #2c3e50;
+                        color: white;
+                    }
+                    QSplitter::handle { background-color: #bdc3c7; }
+                   QStatusBar { background-color: #2c3e50; color: white; }
+                    QMessageBox { background-color: white; }
+                """
+                app.setStyleSheet(light_style)
+                self.btn_theme.setText("Тёмная тема")
+                
+                self.btn_convert.setStyleSheet("""
+                    QPushButton {
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        padding: 8px 15px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background-color: #45a049;
+                    }
+                """)
+            self._refresh_history()
+            app.processEvents()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Не удалось переключить тему:\n{str(e)}"
+            )
+
     def _detect_system(self):
         value = self.input_num.text().strip()
         if not value:
